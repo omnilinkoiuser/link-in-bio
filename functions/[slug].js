@@ -5,13 +5,13 @@ const SLUG = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
 // Pages are written by members, so each one runs in a sandbox. It can't read the builder's
 // sign-in session, submit forms or send data anywhere, even if someone edits its HTML by hand.
 const PAGE_POLICY = [
-  "sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads allow-top-navigation-by-user-activation",
+  "sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads allow-top-navigation-by-user-activation allow-top-navigation-to-custom-protocols",
   "default-src 'none'",
   "img-src data: https:",
   "style-src 'unsafe-inline' https://fonts.googleapis.com",
   "font-src https://fonts.gstatic.com",
   "script-src 'unsafe-inline' https://www.youtube.com",
-  "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
+  "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com",
   "base-uri 'none'",
   "form-action 'none'",
 ].join("; ");

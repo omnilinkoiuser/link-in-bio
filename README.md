@@ -1,10 +1,10 @@
 # OmniLink
 
-A website where anyone can pick a template, edit a link page, and publish it at their own address.
+A website where anyone can pick a design, edit a link page, and publish it at their own address.
 
 ## What's where
 
-- `public/index.html`: the builder and its templates
+- `public/index.html`: the builder and its designs (add more to `LOOKS`)
 - `public/cloud.js`: sign-in and saving
 - `public/config.js`: your Supabase address and public key
 - `public/terms.html`: the rules people agree to when publishing
