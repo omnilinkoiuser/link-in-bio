@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>Your Name | Links</title>
+  <!-- Link previews on social apps read these tags directly, so edit them here. -->
+  <meta name="description" content="All of my links in one place.">
+  <meta property="og:title" content="Your Name | Links">
+  <meta property="og:description" content="All of my links in one place.">
+  <meta property="og:type" content="website">
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = {
+      future: { hoverOnlyWhenSupported: true },
+    };
+  </script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --accent: #ff8a5c;
+      --accent-2: #7c6cff;
+    }
+
+    html, body { background: #0a0a0f; }
+
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* Ambient light behind the glass */
+    .ambient { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+    .ambient::before, .ambient::after {
+      content: "";
+      position: absolute;
+      width: 90vmax;
+      height: 90vmax;
+      border-radius: 50%;
+    }
+    .ambient::before {
+      top: -45vmax;
+      left: -30vmax;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 34%, transparent), transparent);
+    }
+    .ambient::after {
+      right: -35vmax;
+      bottom: -50vmax;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-2) 42%, transparent), transparent);
+    }
+
+    /* Moving light under blurred cards is costly, so it only drifts on large screens */
+    @media (hover: hover) and (min-width: 768px) {
+      .ambient::before { animation: drift 24s ease-in-out infinite alternate; }
+      .ambient::after { animation: drift 30s ease-in-out infinite alternate-reverse; }
+    }
+
+    @keyframes drift {
+      to { transform: translate3d(8vmax, 6vmax, 0); }
+    }
+
+    /* Avatar ring */
+    .avatar-ring::before {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent), var(--accent-2), transparent 70%, var(--accent));
+      animation: spin 7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Entrance */
+    .rise {
+      animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      animation-delay: calc(var(--i, 0) * 45ms);
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+    }
+
+    /* Link cards */
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(220px circle at var(--x, 50%) var(--y, 50%), rgb(255 255 255 / 0.12), transparent);
+      opacity: 0;
+      transition: opacity 0.2s ease-out;
+      pointer-events: none;
+    }
+
+    .card[data-featured] {
+      background: linear-gradient(115deg,
+        color-mix(in srgb, var(--accent) 30%, transparent),
+        color-mix(in srgb, var(--accent-2) 24%, transparent));
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    }
+
+    .card:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    @media (hover: hover) {
+      .card:hover::before { opacity: 1; }
+      .card:hover {
+        box-shadow:
+          0 0 28px -6px color-mix(in srgb, var(--accent) 55%, transparent),
+          0 0 44px -14px color-mix(in srgb, var(--accent-2) 70%, transparent);
+      }
+    }
+
+    .stat-bar {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body class="min-h-dvh text-white antialiased">
+  <div class="ambient" aria-hidden="true"></div>
+
+  <main class="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-14 sm:pt-20">
+    <header class="rise mb-8 flex flex-col items-center text-center">
+      <div class="avatar-ring relative mb-5 h-28 w-28 rounded-full">
+        <div class="relative grid h-full w-full place-items-center overflow-hidden rounded-full border-[3px] border-[#0a0a0f] bg-[#191922]">
+          <span id="initials" class="text-3xl font-semibold tracking-tight text-white/90"></span>
+          <img id="avatar" class="absolute inset-0 hidden h-full w-full object-cover" width="112" height="112" decoding="async" alt="">
+        </div>
+      </div>
+      <h1 id="name" class="text-2xl font-bold tracking-tight"></h1>
+      <p id="bio" class="mt-2 max-w-sm text-[15px] leading-relaxed text-white/65"></p>
+    </header>
+
+    <nav aria-label="Links">
+      <ul id="links" class="flex flex-col gap-3"></ul>
+    </nav>
+
+    <!-- Open the page with ?stats on the end of the URL to see this panel -->
+    <section id="stats" hidden aria-labelledby="stats-title" class="rise mt-8 rounded-2xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-md">
+      <div class="flex items-baseline justify-between gap-4">
+        <h2 id="stats-title" class="font-semibold">Stats in this browser</h2>
+        <button id="stats-reset" type="button" class="rounded text-sm text-white/60 underline-offset-4 hover:text-white hover:underline">Reset</button>
+      </div>
+      <dl class="mt-4 grid grid-cols-3 gap-2 text-center">
+        <div class="rounded-xl bg-white/[0.06] py-3">
+          <dd id="stat-views" class="text-xl font-semibold tabular-nums"></dd>
+          <dt class="text-xs text-white/55">Views</dt>
+        </div>
+        <div class="rounded-xl bg-white/[0.06] py-3">
+          <dd id="stat-clicks" class="text-xl font-semibold tabular-nums"></dd>
+          <dt class="text-xs text-white/55">Clicks</dt>
+        </div>
+        <div class="rounded-xl bg-white/[0.06] py-3">
+          <dd id="stat-rate" class="text-xl font-semibold tabular-nums"></dd>
+          <dt class="text-xs text-white/55">Click rate</dt>
+        </div>
+      </dl>
+      <ul id="stat-rows" class="mt-5 flex flex-col gap-3"></ul>
+    </section>
+
+    <footer id="footer" class="mt-auto pt-10 text-center text-xs text-white/40"></footer>
+  </main>
+
+  <template id="card-template">
+    <li class="rise">
+      <a class="card group relative flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] p-3 backdrop-blur-md transition duration-200 ease-out hover:scale-[1.02] hover:border-white/25 active:scale-[0.98]" target="_blank" rel="noopener">
+        <span data-icon class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/10 text-xl [&>svg]:h-5 [&>svg]:w-5"></span>
+        <span class="min-w-0 flex-1">
+          <span data-title class="block truncate font-semibold"></span>
+          <span data-subtitle class="block truncate text-sm text-white/60"></span>
+        </span>
+        <svg class="mr-1 h-4 w-4 shrink-0 text-white/40 transition duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+      </a>
+    </li>
+  </template>
+
+  <template id="stat-row-template">
+    <li>
+      <div class="flex justify-between gap-4 text-sm">
+        <span data-title class="truncate text-white/80"></span>
+        <span data-count class="tabular-nums text-white/60"></span>
+      </div>
+      <div class="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
+        <div data-bar class="stat-bar h-full rounded-full"></div>
+      </div>
+    </li>
+  </template>
+
+  <script src="config.js"></script>
+  <script>
+    (() => {
+      const STORAGE_KEY = "link-in-bio:stats";
+      const statsMode = new URLSearchParams(location.search).has("stats");
+      const config = window.LINK_CONFIG;
+      const byId = (id) => document.getElementById(id);
+
+      // Lucide-style outline icons, kept inline so the page makes no extra requests
+      const ICONS = {
+        instagram: '<rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
+        tiktok: '<path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>',
+        youtube: '<rect x="2" y="5" width="20" height="14" rx="4"/><path d="m10 9 5 3-5 3z"/>',
+        x: '<path d="m4 4 11.733 16H20L8.267 4z"/><path d="m4 20 6.768-6.768m2.46-2.46L20 4"/>',
+        github: '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>',
+        linkedin: '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>',
+        mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+        globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+        shop: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+        calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+        music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+        play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+        link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+      };
+
+      if (!config) {
+        byId("name").textContent = "Couldn't load config.js";
+        byId("bio").textContent = "Check it for a missing quote or comma.";
+        return;
+      }
+
+      // Storage can be unavailable (private windows), so counts fall back to memory
+      const readStats = () => {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { views: 0, clicks: {} };
+        } catch {
+          return { views: 0, clicks: {} };
+        }
+      };
+
+      let stats = readStats();
+
+      const saveStats = () => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
+        } catch {}
+      };
+
+      const send = (event, data) => {
+        const endpoint = config.analytics && config.analytics.endpoint;
+        if (!endpoint) return;
+        // A string body is sent as text/plain, which avoids a CORS preflight
+        navigator.sendBeacon(endpoint, JSON.stringify({ event, ...data, page: location.href, time: Date.now() }));
+      };
+
+      const trackClick = (link) => {
+        stats.clicks[link.url] = (stats.clicks[link.url] || 0) + 1;
+        saveStats();
+        send("click", { title: link.title, url: link.url });
+      };
+
+      const renderIcon = (el, icon) => {
+        if (ICONS[icon]) {
+          el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[icon]}</svg>`;
+        } else if (icon) {
+          el.textContent = icon;
+        } else {
+          el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS.link}</svg>`;
+        }
+      };
+
+      const renderProfile = () => {
+        const { name, bio, avatar } = config.profile;
+        byId("name").textContent = name;
+        byId("bio").textContent = bio;
+        byId("initials").textContent = name.split(/\s+/).map((word) => word[0]).slice(0, 2).join("").toUpperCase();
+        byId("footer").textContent = config.footer || "";
+
+        if (avatar) {
+          const img = byId("avatar");
+          img.addEventListener("load", () => img.classList.remove("hidden"));
+          img.alt = name;
+          img.src = avatar;
+        }
+
+        const { accent, accent2 } = config.theme || {};
+        if (accent) document.documentElement.style.setProperty("--accent", accent);
+        if (accent2) document.documentElement.style.setProperty("--accent-2", accent2);
+      };
+
+      const renderLinks = () => {
+        const list = byId("links");
+        const template = byId("card-template");
+
+        config.links.forEach((link, index) => {
+          const item = template.content.cloneNode(true);
+          const card = item.querySelector("a");
+          const subtitle = item.querySelector("[data-subtitle]");
+
+          item.querySelector("li").style.setProperty("--i", index + 1);
+          card.href = link.url;
+          card.dataset.index = index;
+          if (link.featured) card.dataset.featured = "";
+          item.querySelector("[data-title]").textContent = link.title;
+          renderIcon(item.querySelector("[data-icon]"), link.icon);
+
+          if (link.subtitle) subtitle.textContent = link.subtitle;
+          else subtitle.remove();
+
+          list.append(item);
+        });
+
+        const onActivate = (event) => {
+          const card = event.target.closest("a[data-index]");
+          if (card && !statsMode) trackClick(config.links[card.dataset.index]);
+        };
+        list.addEventListener("click", onActivate);
+        // Middle-click opens a link without firing "click"
+        list.addEventListener("auxclick", (event) => {
+          if (event.button === 1) onActivate(event);
+        });
+
+        // Glow follows the pointer on devices that can hover
+        list.addEventListener("pointermove", (event) => {
+          const card = event.target.closest("a[data-index]");
+          if (!card || event.pointerType !== "mouse") return;
+          const rect = card.getBoundingClientRect();
+          card.style.setProperty("--x", `${event.clientX - rect.left}px`);
+          card.style.setProperty("--y", `${event.clientY - rect.top}px`);
+        });
+      };
+
+      const renderStats = () => {
+        const counts = config.links.map((link) => stats.clicks[link.url] || 0);
+        const total = counts.reduce((sum, count) => sum + count, 0);
+        const highest = Math.max(1, ...counts);
+        const template = byId("stat-row-template");
+
+        byId("stat-views").textContent = stats.views;
+        byId("stat-clicks").textContent = total;
+        byId("stat-rate").textContent = stats.views ? `${Math.round((total / stats.views) * 100)}%` : "–";
+
+        byId("stat-rows").replaceChildren(...config.links.map((link, index) => {
+          const row = template.content.cloneNode(true);
+          row.querySelector("[data-title]").textContent = link.title;
+          row.querySelector("[data-count]").textContent = counts[index];
+          row.querySelector("[data-bar]").style.width = `${(counts[index] / highest) * 100}%`;
+          return row;
+        }));
+      };
+
+      renderProfile();
+      renderLinks();
+
+      if (statsMode) {
+        // Looking at your own stats doesn't count as a view or a click
+        byId("stats").hidden = false;
+        byId("stats").style.setProperty("--i", config.links.length + 1);
+        byId("stats-reset").addEventListener("click", () => {
+          if (!confirm("Reset the stats in this browser?")) return;
+          stats = { views: 0, clicks: {} };
+          saveStats();
+          renderStats();
+        });
+        renderStats();
+      } else {
+        stats.views += 1;
+        saveStats();
+        send("view", {});
+      }
+    })();
+  </script>
+</body>
+</html>
