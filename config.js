@@ -3,8 +3,8 @@
 
 window.LINK_CONFIG = {
   profile: {
-    name: "Your Name",
-    bio: "One line about who you are and what people will find here.",
+    name: "OmniLink",
+    bio: "Your Everyday Link Buddy",
     // Path or URL to a square image, e.g. "avatar.jpg". Leave empty to show your initials.
     avatar: "",
   },
@@ -51,7 +51,7 @@ window.LINK_CONFIG = {
     },
   ],
 
-  footer: "© Your Name",
+  footer: "© OmniLink",
 
   analytics: {
     // Optional URL that receives each view and click as JSON.
