@@ -1732,8 +1732,6 @@ const A={
   doPublish(){if(cloud){publishToCloud();return;}if(!state.site.slug)state.site.slug=siteSlug();state.publishedAt=Date.now();pubStep='done';renderPub();scheduleSave();toast('Your site is ready to go live');},
   pubBack(){pubStep='setup';renderPub();},
   authMode(d){authMode=d.mode;cloudError='';cloudNote='';renderPub();},
-  forgotPass(){cloudTask(async()=>{const email=$('authEmail').value.trim();if(!email)throw new Error('Enter your email first.');await cloud.sendPasswordReset(email);cloudNote='Check your email for a link to reset your password.';});},
-  savePass(){cloudTask(async()=>{const pass=$('authPass').value;if(pass.length<8)throw new Error('Use at least 8 characters.');await cloud.setPassword(pass);authPass='';authMode='signin';await refreshCloud();toast('Password updated');});},
   signOut(){cloudTask(async()=>{await cloud.signOut();cloudUser=null;cloudPage=null;authMode='signin';toast('Signed out');});},
   loadSaved(){cloudTask(async()=>{const page=await cloud.getPage(cloudUser);if(!page)throw new Error('No saved page found.');clearTimeout(saveT);localStorage.setItem(KEY,JSON.stringify(page.state));location.reload();});},
   copyLink(){const url=pageUrl(cloudPage.slug);navigator.clipboard.writeText(url).then(()=>toast('Link copied'),()=>toast(url));},
@@ -1866,8 +1864,7 @@ function issues(){
 }
 /* hosted publishing: cloud.js talks to the backend. Without it, the download steps below still work */
 let cloud=null,cloudChecked=false,cloudUser=null,cloudPage=null,cloudError='',cloudNote='',cloudBusy=false,authMode='signup',authEmail='',authPass='';
-const recoveringPassword=/type=recovery/.test(location.hash);
-const SLUG_RE=/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/,MAX_PAGE_BYTES=2097152;
+const SLUG_RE=/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/,MAX_PAGE_BYTES=1900000;
 const pageUrl=slug=>location.origin+'/'+slug;
 function siteUrl(slug){return cloud?pageUrl(slug):'https://'+slug+'.netlify.app';}
 const byteSize=s=>new Blob([s]).size;
@@ -1893,7 +1890,6 @@ function publishToCloud(){
       if(authMode==='signup'&&pass.length<8)throw new Error('Use at least 8 characters for your password.');
       cloudUser=authMode==='signup'?await cloud.signUp(email,pass):await cloud.signIn(email,pass);
       authPass='';
-      if(!cloudUser){authMode='signin';cloudNote='Check your email to confirm your account, then sign in here to publish.';return;}
       cloudPage=await cloud.getPage(cloudUser);
       // Publishing now could replace a saved page with this browser's draft, so let them choose
       if(cloudPage){if(!state.site.slug)state.site.slug=cloudPage.slug;cloudNote='You already have a saved page. Load it to keep editing, or click Publish site to replace it.';return;}
@@ -1901,16 +1897,13 @@ function publishToCloud(){
     if(cloudPage&&cloudPage.blocked)throw new Error('This page was taken down for breaking the rules, so it can’t be published.');
     const html=buildPage(state);
     state.site.slug=slug;
-    if(byteSize(html)>MAX_PAGE_BYTES||byteSize(JSON.stringify(state))>MAX_PAGE_BYTES)throw new Error('Your page is over the 2 MB limit. Use fewer or smaller images.');
+    if(byteSize(html)>MAX_PAGE_BYTES||byteSize(JSON.stringify(state))>MAX_PAGE_BYTES)throw new Error('Your page is too large. Use fewer or smaller images.');
     await cloud.publishPage(cloudUser,slug,state,html);
     cloudPage={slug,published:true,blocked:false};
     state.publishedAt=Date.now();scheduleSave();pubStep='done';toast('Your page is live');
   });
 }
 function accountHTML(){
-  if(authMode==='newpass')return `<section class="grp"><h2>Choose a new password</h2>
-    <div class="field"><label for="authPass">New password</label><input type="password" id="authPass" autocomplete="new-password" minlength="8"></div>
-    <button type="button" class="btn" data-act="savePass"${cloudBusy?' disabled':''}>Save new password</button></section>`;
   if(cloudUser)return `<section class="grp"><h2>Your account</h2>
     <p class="hint" style="margin:0">Signed in as <b>${esc(cloudUser.email)}</b></p>
     ${cloudPage?`<p class="hint" style="margin:0">Your saved page is at <b>/${esc(cloudPage.slug)}</b>${cloudPage.published?'':' and is offline'}.</p>`:''}
@@ -1920,7 +1913,7 @@ function accountHTML(){
     <div class="seg sm" role="group" aria-label="Account"><button type="button" data-act="authMode" data-mode="signup" aria-pressed="${signup}">Create account</button><button type="button" data-act="authMode" data-mode="signin" aria-pressed="${!signup}">Sign in</button></div>
     <div class="field"><label for="authEmail">Email</label><input type="email" id="authEmail" autocomplete="email" placeholder="you@example.com" value="${esc(authEmail)}"></div>
     <div class="field"><label for="authPass">Password</label><input type="password" id="authPass" autocomplete="${signup?'new-password':'current-password'}" minlength="8" placeholder="${signup?'At least 8 characters':''}" value="${esc(authPass)}"></div>
-    ${signup?'':'<button type="button" class="btn ghost sm" data-act="forgotPass">Forgot password?</button>'}</section>`;
+    <p class="hint" style="margin:0">Keep your password somewhere safe. It can’t be reset by email yet.</p></section>`;
 }
 function renderCloudPub(f,slug){
   const status=(cloudError?`<p class="hint" role="alert" style="margin:0;color:var(--danger)">${esc(cloudError)}</p>`:'')+(cloudNote?`<p class="hint" role="status" style="margin:0;color:var(--ink)">${esc(cloudNote)}</p>`:'');
@@ -1992,7 +1985,6 @@ import('./cloud.js').then(m=>{
   if(!m.configured)return;
   cloud=m;
   render();
-  if(recoveringPassword){authMode='newpass';openPub();}
 }).catch(()=>{});
 $('pubClose').innerHTML=svg('x');$('pubClose').onclick=()=>{$('pub').hidden=true;};
 $('devSeg').addEventListener('click',e=>{const b=e.target.closest('[data-dev]');if(!b)return;$('pubPrev').dataset.dev=b.dataset.dev;$('devSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));requestAnimationFrame(fitFrames);});

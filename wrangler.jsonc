@@ -1,0 +1,20 @@
+{
+  "name": "link-in-bio",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "omnilink",
+      "database_id": "7297889c-8a0e-4fa9-affb-9fc04629705a"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
